@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="description" content="CloudSpend personal expense tracker">
+
+  <title>CloudSpend | Expense Tracker</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="app.js" defer></script>
+
+</head>
+
+<body>
+
+  <div class="app-shell">
+
+    <aside class="sidebar">
+
+      <a class="brand" href="#overview">
+
+        <span class="brand-mark">C</span>
+
+        <span>CloudSpend</span>
+
+      </a>
+
+      <p class="sidebar-label">WORKSPACE</p>
+
+      <nav class="navigation" aria-label="Main navigation">
+
+        <a class="nav-link active" href="#overview">Overview</a>
+
+        <a class="nav-link" href="#wallet">Wallet</a>
+        <a class="nav-link" href="#add-expense">Add expense</a>
+        <a class="nav-link" href="#income-calendar" id="openIncomeCalendar">Add income</a>
+
+        <a class="nav-link" href="#analysis">Expense analysis</a>
+
+        <a class="nav-link" href="#transactions">Transactions</a>
+
+      </nav>
+
+      <div class="sidebar-bottom">
+
+        <div class="sidebar-note">
+
+          <strong>Your spending, clearly.</strong>
+
+          <p>Record expenses and understand your spending habits.</p>
+
+        </div>
+
+        <p class="sidebar-footer">CloudSpend · Personal workspace</p>
+
+      </div>
+
+    </aside>
+
+    <main class="main-content">
+
+      <header class="topbar">
+
+        <div>
+
+          <p class="eyebrow">PERSONAL FINANCE</p>
+
+          <h1>Expense tracker</h1>
+
+          <p class="page-subtitle">Keep track of your spending, one entry at a time.</p>
+
+        </div>
+
+        <div class="topbar-actions">
+          <a class="button button-secondary" href="#income-calendar" id="topAddIncome">+ Add income</a>
+          <a class="button button-primary" href="#add-expense">+ Add expense</a>
+        </div>
+
+      </header>
+
+      <div id="overviewPage">
+
+        <section id="overview" class="page-section">
+
+          <div class="section-heading">
+
+            <div>
+
+              <h2>Overview</h2>
+
+              <p>A summary of the expenses you've recorded.</p>
+
+            </div>
+
+          </div>
+
+          <div class="summary-grid">
+
+            <article class="summary-card">
+
+              <p class="summary-label">Total recorded</p>
+
+              <p id="totalSpent" class="summary-value">₹0</p>
+
+              <p class="summary-footnote">Across all recorded expenses</p>
+
+            </article>
+
+            <article class="summary-card">
+
+              <p class="summary-label">Transactions</p>
+
+              <p id="transactionCount" class="summary-value">0</p>
+
+              <p class="summary-footnote">Expenses you've entered</p>
+
+            </article>
+
+            <article class="summary-card">
+
+              <p class="summary-label">Average expense</p>
+
+              <p id="averageExpense" class="summary-value">₹0</p>
+
+              <p class="summary-footnote">Average per transaction</p>
+
+            </article>
+
+          </div>
+
+        </section>
+
+        <section id="wallet" class="page-section">
+          <div class="section-heading">
+            <div>
+              <h2>Your wallet</h2>
+              <p>Income adds to your balance. Every recorded expense is deducted automatically.</p>
+            </div>
+            <button class="button button-primary" type="button" id="walletAddIncome">+ Add income</button>
+          </div>
+
+          <div class="wallet-summary-grid">
+            <article class="wallet-balance-card">
+              <p class="summary-label">Available balance</p>
+              <p id="walletBalance" class="wallet-balance-value">₹0.00</p>
+              <p class="summary-footnote">Total income recorded minus all expenses</p>
+            </article>
+            <article class="summary-card">
+              <p class="summary-label">Income this month</p>
+              <p id="walletMonthIncome" class="summary-value income-color">₹0</p>
+              <p class="summary-footnote">Money received this month</p>
+            </article>
+            <article class="summary-card">
+              <p class="summary-label">Spent this month</p>
+              <p id="walletMonthExpenses" class="summary-value">₹0</p>
+              <p class="summary-footnote">Expenses recorded this month</p>
+            </article>
+            <article class="summary-card">
+              <p class="summary-label">Monthly balance</p>
+              <p id="walletMonthRemaining" class="summary-value">₹0</p>
+              <p class="summary-footnote">This month's income minus spending</p>
+            </article>
+          </div>
+
+          <div class="wallet-settings panel">
+            <div>
+              <p class="eyebrow">QUICK SETUP</p>
+              <h3>Set your usual monthly income</h3>
+              <p class="panel-description">We’ll use this amount as a convenient starting value when you record income on the calendar. It won’t be added to your balance until you save an income entry.</p>
+            </div>
+            <form id="monthlyIncomeForm" class="monthly-income-form">
+              <label for="monthlyIncomeAmount">Monthly income (₹)</label>
+              <input id="monthlyIncomeAmount" type="number" min="0.01" step="0.01" placeholder="e.g. 25000" required>
+              <button class="button button-secondary" type="submit">Save default amount</button>
+            </form>
+          </div>
+
+          <div class="panel wallet-activity-panel">
+            <div class="panel-heading">
+              <div><h3>Recent income</h3><p class="panel-description">Income entries you've added to the calendar.</p></div>
+            </div>
+            <div id="incomeActivityList" class="income-activity-list">
+              <p class="muted">No income recorded yet.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="add-expense" class="page-section">
+
+          <div class="section-heading">
+
+            <div>
+
+              <h2>Add an expense</h2>
+
+              <p>Enter the details below to record a transaction.</p>
+
+            </div>
+
+          </div>
+
+          <div class="panel">
+
+            <form id="expense-form" class="expense-form">
+
+              <div class="form-field description-field">
+
+                <label for="description">Description</label>
+
+                <input id="description" name="description" type="text"
+
+                  maxlength="120" placeholder="e.g. Groceries" required>
+
+              </div>
+
+              <div class="form-field">
+
+                <label for="amount">Amount (₹)</label>
+
+                <input id="amount" name="amount" type="number"
+
+                  min="0.01" step="0.01" placeholder="0.00" required>
+
+              </div>
+
+              <div class="form-field">
+
+                <label for="date">Date</label>
+
+                <input id="date" name="date" type="date" required>
+
+              </div>
+
+              <div class="form-field">
+
+                <label for="category">Category</label>
+
+                <select id="category" name="category" required>
+
+                  <option>Food</option>
+
+                  <option>Bills</option>
+
+                  <option>Transport</option>
+
+                  <option>Education</option>
+
+                  <option>Health</option>
+
+                  <option>Entertainment</option>
+
+                  <option>Shopping</option>
+
+                  <option selected>Other</option>
+
+                </select>
+
+              </div>
+
+              <div class="form-field">
+
+                <label for="payment">Payment method</label>
+
+                <select id="payment" name="payment" required>
+
+                  <option>UPI</option>
+
+                  <option>Card</option>
+
+                  <option>Cash</option>
+
+                  <option>Bank transfer</option>
+
+                  <option selected>Other</option>
+
+                </select>
+
+              </div>
+
+              <div class="form-actions">
+
+                <button class="button button-primary" type="submit">Save expense</button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </section>
+
+        <section id="analysis" class="page-section">
+
+          <div class="section-heading analysis-heading">
+
+            <div>
+
+              <h2>Expense analysis</h2>
+
+              <p>Explore how your expenditure changes over time.</p>
+
+            </div>
+
+            <div class="period-control">
+
+              <label for="periodSelect">Group by</label>
+
+              <select id="periodSelect">
+
+                <option value="monthly">Monthly</option>
+
+                <option value="bimonthly">Every two months</option>
+
+                <option value="quarterly">Quarterly</option>
+
+                <option value="halfyearly">Half-yearly</option>
+
+                <option value="annually">Annually</option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+          <div class="chart-grid">
+
+            <article class="panel chart-panel">
+
+              <div class="panel-heading">
+
+                <div>
+
+                  <h3>Spending over time</h3>
+
+                  <p class="panel-description">Select a bar to inspect that period.</p>
+
+                </div>
+
+              </div>
+
+              <div class="chart-container period-chart-container">
+
+                <canvas id="periodChart" aria-label="Expenditure over time"></canvas>
+
+              </div>
+
+              <p id="periodChartHint" class="chart-hint">
+
+                Select a monthly bar to open its daily breakdown.
+
+              </p>
+
+            </article>
+
+            <article class="panel chart-panel">
+
+              <div class="panel-heading">
+
+                <div>
+
+                  <h3 id="categoryChartTitle">Category breakdown</h3>
+
+                  <p id="categoryChartSubtitle" class="panel-description">
+
+                    Select a period to inspect its categories.
+
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div class="chart-container category-chart-container">
+
+                <canvas id="categoryChart" aria-label="Expense categories"></canvas>
+
+              </div>
+
+            </article>
+
+          </div>
+
+        </section>
+
+        <section id="transactions" class="page-section">
+
+          <div class="section-heading">
+
+            <div>
+
+              <h2>Transactions</h2>
+
+              <p>Your recorded expenses, newest first.</p>
+
+            </div>
+
+          </div>
+
+          <div class="panel transaction-panel">
+
+            <div id="emptyState" class="empty-state">
+
+              <div class="empty-state-mark">+</div>
+
+              <h3>No expenses yet</h3>
+
+              <p>Your workspace is empty. Add an expense to start building your spending history.</p>
+
+              <a class="button button-secondary" href="#add-expense">Add your first expense</a>
+
+            </div>
+
+            <div class="table-wrapper">
+
+              <table class="transactions-table">
+
+                <thead>
+
+                  <tr>
+
+                    <th>Description</th>
+
+                    <th>Amount</th>
+
+                    <th>Category</th>
+
+                    <th>Date</th>
+
+                    <th>Payment</th>
+
+                    <th>Action</th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody id="expenses-table-body"></tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </div>
+
+      <!-- Dedicated monthly detail screen -->
+
+      <section id="monthDetail" class="month-detail hidden" hidden>
+
+        <div class="detail-topbar">
+
+          <button id="backToAnalysis" class="button button-secondary" type="button">
+
+            ← Back to overview
+
+          </button>
+
+          <p class="eyebrow">DAILY EXPENDITURE</p>
+
+        </div>
+
+        <div class="detail-heading">
+
+          <div>
+
+            <h1 id="detailMonthLabel">Month details</h1>
+
+            <p>Explore daily spending, select dates and compare expenses.</p>
+
+          </div>
+
+          <div class="month-total-box">
+
+            <p class="summary-label">Total for this month</p>
+
+            <p id="detailMonthTotal" class="summary-value">₹0</p>
+
+          </div>
+
+        </div>
+
+        <div class="detail-grid">
+
+          <article class="panel calendar-panel">
+
+            <div class="calendar-toolbar">
+
+              <button id="previousMonth" class="icon-button" type="button"
+
+                aria-label="Previous month">←</button>
+
+              <h2 id="calendarTitle">Month</h2>
+
+              <button id="nextMonth" class="icon-button" type="button"
+
+                aria-label="Next month">→</button>
+
+            </div>
+
+            <div class="calendar-weekdays" aria-hidden="true">
+
+              <span>Mon</span><span>Tue</span><span>Wed</span>
+
+              <span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+
+            </div>
+
+            <div id="calendarGrid" class="calendar-grid"></div>
+
+            <div class="heatmap-legend">
+
+              <span>Less</span>
+
+              <span class="heat-level heat-0"></span>
+
+              <span class="heat-level heat-1"></span>
+
+              <span class="heat-level heat-2"></span>
+
+              <span class="heat-level heat-3"></span>
+
+              <span class="heat-level heat-4"></span>
+
+              <span>More</span>
+
+            </div>
+
+            <p class="calendar-instruction">
+
+              Darker green means higher spending relative to other days in this month.
+
+              Select multiple days to combine their totals.
+
+            </p>
+
+          </article>
+
+          <div class="selection-column">
+
+            <article class="panel selection-summary-panel">
+
+              <p class="summary-label">Combined spending on selected dates</p>
+
+              <p id="selectedDatesTotal" class="summary-value selected-total">₹0</p>
+
+              <div class="selected-dates-heading">
+
+                <h3>Selected dates</h3>
+
+                <button id="clearSelectedDates" class="text-button" type="button">
+
+                  Clear
+
+                </button>
+
+              </div>
+
+              <div id="selectedDatesList" class="selected-dates-list">
+
+                <p class="muted">Select dates on the calendar.</p>
+
+              </div>
+
+            </article>
+
+            <article class="panel">
+
+              <div class="panel-heading">
+
+                <div>
+
+                  <h3>Category breakdown</h3>
+
+                  <p class="panel-description">For the selected month.</p>
+
+                </div>
+
+              </div>
+
+              <div class="chart-container detail-pie-container">
+
+                <canvas id="detailCategoryChart" aria-label="Monthly category breakdown"></canvas>
+
+              </div>
+
+            </article>
+
+          </div>
+
+        </div>
+
+        <article class="panel selected-transactions-panel">
+
+          <div class="panel-heading">
+
+            <div>
+
+              <h2>Expenses on selected dates</h2>
+
+              <p class="panel-description">All transactions from your selected days.</p>
+
+            </div>
+
+          </div>
+
+          <div id="selectedDateTransactions" class="table-wrapper">
+
+            <p class="muted">No dates selected.</p>
+
+          </div>
+
+        </article>
+
+      </section>
+
+      <!-- Dedicated income calendar page -->
+      <section id="incomeCalendarPage" class="income-calendar-page hidden" hidden>
+        <div class="detail-topbar">
+          <button id="backFromIncomeCalendar" class="button button-secondary" type="button">← Back to wallet</button>
+          <p class="eyebrow">RECORD MONEY RECEIVED</p>
+        </div>
+        <div class="detail-heading">
+          <div>
+            <h1>Add income</h1>
+            <p>Choose the day you received the money, then enter the details. Your wallet updates when you save.</p>
+          </div>
+          <div class="month-total-box income-selected-date-box">
+            <p class="summary-label">Selected date</p>
+            <p id="incomeSelectedDateLabel" class="summary-value">Choose a day</p>
+          </div>
+        </div>
+
+        <div class="income-calendar-layout">
+          <article class="panel calendar-panel income-calendar-panel">
+            <div class="calendar-toolbar">
+              <button id="incomePreviousMonth" class="icon-button" type="button" aria-label="Previous month">←</button>
+              <h2 id="incomeCalendarTitle">Month</h2>
+              <button id="incomeNextMonth" class="icon-button" type="button" aria-label="Next month">→</button>
+            </div>
+            <div class="calendar-weekdays" aria-hidden="true">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div id="incomeCalendarGrid" class="calendar-grid income-calendar-grid"></div>
+            <p class="calendar-instruction">Select a date to record when you received the money. Days with recorded income are marked in green.</p>
+          </article>
+
+          <article class="panel income-entry-panel">
+            <p class="eyebrow">INCOME DETAILS</p>
+            <h2 id="incomeFormDateHeading">Select a date first</h2>
+            <p class="panel-description">You can add salary, allowance, scholarship, freelance earnings, gifts, or any other money received.</p>
+            <form id="incomeEntryForm" class="income-entry-form">
+              <div class="form-field">
+                <label for="incomeDescription">Where did the money come from?</label>
+                <input id="incomeDescription" type="text" maxlength="120" placeholder="e.g. Monthly salary" required>
+              </div>
+              <div class="form-field">
+                <label for="incomeAmount">Amount received (₹)</label>
+                <input id="incomeAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+              </div>
+              <button class="button button-primary" type="submit">Save income to wallet</button>
+              <p class="form-help">The balance changes only after you save this entry.</p>
+            </form>
+            <div class="divider-line"></div>
+            <h3>Income on this date</h3>
+            <div id="incomeSelectedDateEntries" class="income-selected-entries"><p class="muted">Choose a date to see income recorded for it.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <footer class="main-footer">
+
+        <span>CloudSpend</span>
+
+        <span>Personal expense tracking</span>
+
+      </footer>
+
+    </main>
+
+  </div>
+
+</body>
+
+</html>

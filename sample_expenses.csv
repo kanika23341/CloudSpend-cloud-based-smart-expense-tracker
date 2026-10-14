@@ -1,0 +1,6 @@
+date,description,amount,category,payment
+2026-10-01,Groceries,1200,Food,UPI
+2026-10-03,Internet bill,899,Bills,Card
+2026-10-05,Bus travel,150,Transport,UPI
+2026-10-07,Online course,799,Education,Card
+2026-10-09,Restaurant dinner,650,Food,UPI
