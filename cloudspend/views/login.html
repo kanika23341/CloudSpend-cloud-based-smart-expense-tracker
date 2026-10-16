@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CloudSpend personal expense tracker">
+  <title>Log in | CloudSpend</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/auth.css">
+  <script src="/auth.js" defer></script>
+</head>
+<body>
+  <div class="auth-shell">
+    <aside class="auth-aside">
+      <a class="brand" href="/login"><span class="brand-mark">C</span><span>CloudSpend</span></a>
+      <div>
+        <h2>Your spending and savings, clearly.</h2>
+        <p>Record what you earn and spend, set a savings goal for each month, and see how you are doing over time.</p>
+        <ul class="auth-points">
+          <li>Track income and expenses in one place</li>
+          <li>Set monthly savings goals and follow your progress</li>
+          <li>Keep your data private to your own account</li>
+        </ul>
+      </div>
+      <p class="auth-aside-footer">CloudSpend &middot; Personal workspace</p>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <a class="brand auth-mobile-brand" href="/login"><span class="brand-mark">C</span><span>CloudSpend</span></a>
+        <h1>Welcome back</h1>
+        <p class="auth-subtitle">Log in to see your expenses and savings.</p>
+
+        <form id="loginForm" class="auth-form" novalidate>
+          <p id="formAlert" class="form-alert" role="alert" hidden></p>
+
+          <div class="form-field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
+            <p id="emailError" class="field-error" aria-live="polite"></p>
+          </div>
+
+          <div class="form-field">
+            <label for="password">Password</label>
+            <div class="password-wrap">
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your password" required>
+              <button type="button" class="password-toggle" data-toggle="password" aria-controls="password" aria-pressed="false">Show</button>
+            </div>
+            <p id="passwordError" class="field-error" aria-live="polite"></p>
+          </div>
+
+          <button class="button button-primary auth-submit" type="submit">Log in</button>
+        </form>
+
+        <p class="auth-switch">New to CloudSpend? <a href="/register">Create an account</a></p>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
