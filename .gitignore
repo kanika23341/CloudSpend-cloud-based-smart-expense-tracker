@@ -1,0 +1,35 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & secrets
+.env
+.env.local
+.env.production
+
+# SQLite local database files
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+!data/.gitkeep
+
+# Uploaded receipts & generated reports
+public/uploads/*
+!public/uploads/.gitkeep
+data/exports/*
+!data/exports/.gitkeep
+
+# AWS SAM build outputs
+.aws-sam/
+samconfig.toml
+
+# Logs
+logs/
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db

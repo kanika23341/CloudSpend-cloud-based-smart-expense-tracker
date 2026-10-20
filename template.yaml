@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  CloudSpend - Production Personal Finance Web Application
+  Integrates Cognito, DynamoDB, S3, SNS, CloudWatch, SSM, Lambda, and API Gateway.
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+    Runtime: nodejs22.x
+    Environment:
+      Variables:
+        NODE_ENV: production
+        STORAGE_MODE: dynamodb
+        AUTH_PROVIDER: cognito
+        DYNAMODB_TABLE_NAME: !Ref CloudSpendTable
+        S3_BUCKET_NAME: !Ref CloudSpendReceiptsBucket
+        SNS_TOPIC_ARN: !Ref CloudSpendAlertsTopic
+        COGNITO_USER_POOL_ID: !Ref CloudSpendUserPool
+        COGNITO_CLIENT_ID: !Ref CloudSpendUserPoolClient
+        CLOUDWATCH_METRICS_ENABLED: 'true'
+        CLOUDWATCH_NAMESPACE: CloudSpend/App
+        SSM_CONFIG_ENABLED: 'true'
+        SSM_PARAM_PREFIX: /cloudspend/production/
+        ASYNC_REPORT_LAMBDA_NAME: !Ref CloudSpendReportWorker
+        IS_SERVERLESS: 'true'
+
+Resources:
+  # ==============================================================================
+  # 1. AWS API Gateway (HTTP API v2)
+  # ==============================================================================
+  CloudSpendHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - '*'
+        AllowOrigins:
+          - '*'
+
+  # ==============================================================================
+  # 2. AWS Lambda (Primary Express Web & API Application Server)
+  # ==============================================================================
+  CloudSpendFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/lambda.handler
+      Description: Core CloudSpend Express Web Application behind API Gateway
+      Policies:
+        # Least-privilege IAM policies
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CloudSpendTable
+        - S3CrudPolicy:
+            BucketName: !Ref CloudSpendReceiptsBucket
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt CloudSpendAlertsTopic.TopicName
+        - SSMParameterReadPolicy:
+            ParameterName: cloudspend/production/*
+        - LambdaInvokePolicy:
+            FunctionName: !Ref CloudSpendReportWorker
+        - CloudWatchPutMetricPolicy: {}
+      Events:
+        RootRoute:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CloudSpendHttpApi
+            Path: /
+            Method: ANY
+        ProxyRoute:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref CloudSpendHttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  # ==============================================================================
+  # 3. AWS Lambda (Asynchronous Background Report Worker)
+  # ==============================================================================
+  CloudSpendReportWorker:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/workers/asyncReportWorker.handler
+      Description: Asynchronous worker for generating monthly financial statements and reports
+      Timeout: 60
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CloudSpendTable
+        - S3CrudPolicy:
+            BucketName: !Ref CloudSpendReceiptsBucket
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt CloudSpendAlertsTopic.TopicName
+        - CloudWatchPutMetricPolicy: {}
+
+  # ==============================================================================
+  # 4. AWS DynamoDB (Single-Table Application Store)
+  # ==============================================================================
+  CloudSpendTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: CloudSpend-Main
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  # ==============================================================================
+  # 5. AWS S3 (Receipt Uploads & Financial Statement Exports)
+  # ==============================================================================
+  CloudSpendReceiptsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub cloudspend-assets-${AWS::AccountId}-${AWS::Region}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - HEAD
+            AllowedOrigins:
+              - '*'
+            MaxAge: 3600
+
+  # ==============================================================================
+  # 6. AWS SNS (Budget Alerts & Transaction Notifications Topic)
+  # ==============================================================================
+  CloudSpendAlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: CloudSpend-BudgetAlerts
+      DisplayName: CloudSpend Real-Time Budget Alerts
+
+  # ==============================================================================
+  # 7. AWS Cognito (User Authentication & Directory)
+  # ==============================================================================
+  CloudSpendUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: CloudSpend-UserPool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireUppercase: false
+
+  CloudSpendUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: CloudSpend-WebClient
+      UserPoolId: !Ref CloudSpendUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  # ==============================================================================
+  # 8. AWS CloudWatch (Operational Metric Alarm)
+  # ==============================================================================
+  CloudSpendServerErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: CloudSpend-ServerErrorAlarm
+      AlarmDescription: Alarms when HTTP 5xx errors exceed 5 within a 5-minute period
+      MetricName: Http5xxErrors
+      Namespace: CloudSpend/App
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+
+Outputs:
+  ApiEndpoint:
+    Description: HTTP API Gateway endpoint URL for CloudSpend
+    Value: !Sub https://${CloudSpendHttpApi}.execute-api.${AWS::Region}.amazonaws.com
+  CognitoUserPoolId:
+    Description: Cognito User Pool ID
+    Value: !Ref CloudSpendUserPool
+  CognitoClientId:
+    Description: Cognito App Client ID
+    Value: !Ref CloudSpendUserPoolClient
+  DynamoDBTableName:
+    Description: DynamoDB Table Name
+    Value: !Ref CloudSpendTable
+  S3BucketName:
+    Description: S3 Receipts & Exports Bucket
+    Value: !Ref CloudSpendReceiptsBucket
+  SNSTopicArn:
+    Description: SNS Alerts Topic ARN
+    Value: !Ref CloudSpendAlertsTopic

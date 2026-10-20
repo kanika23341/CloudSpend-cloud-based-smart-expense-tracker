@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudSpend — Personal Finance & Cloud Intelligence</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-icon">CS</div>
+        <div>
+          <span class="brand-title">CloudSpend</span>
+          <span class="brand-tag">Personal Finance</span>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <!-- Month Selector -->
+        <input type="month" id="global-month-picker" aria-label="Select month">
+
+        <!-- Notification Bell Dropdown -->
+        <div style="position: relative;">
+          <button id="notif-toggle-btn" class="btn btn-secondary btn-sm" aria-label="Notifications">
+            🔔 <span id="notif-badge" class="badge badge-warning" style="display:none; padding: 1px 4px;">0</span>
+          </button>
+          <div id="notif-dropdown" class="notif-dropdown">
+            <div class="notif-header">
+              <span>Notifications & Alerts</span>
+              <button id="notif-read-all-btn" class="btn btn-secondary btn-sm" style="font-size:0.7rem; padding: 2px 6px;">Mark all read</button>
+            </div>
+            <div id="notif-list" class="notif-list">
+              <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8125rem;">No notifications.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Profile / Auth State -->
+        <div id="user-profile-widget" style="display: flex; align-items: center; gap: 0.5rem;">
+          <span id="user-display-name" style="font-size: 0.875rem; font-weight: 500;">Guest</span>
+          <button id="auth-action-btn" class="btn btn-secondary btn-sm">Sign In</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="app-nav">
+    <div class="nav-inner">
+      <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+      <button class="nav-tab" data-tab="transactions">Transactions</button>
+      <button class="nav-tab" data-tab="analytics">Analytics</button>
+      <button class="nav-tab" data-tab="calendar">Calendar & Heatmap</button>
+      <button class="nav-tab" data-tab="wallet">Wallet & Budgets</button>
+      <button class="nav-tab" data-tab="cloud">AWS & Cloud Status</button>
+    </div>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main class="app-main">
+
+    <!-- TAB 1: DASHBOARD -->
+    <section id="tab-dashboard" class="tab-panel active">
+      <!-- 4-Metric Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Monthly Spending</div>
+          <div class="metric-value expense num" id="dash-spend">₹0.00</div>
+          <div class="metric-sub" id="dash-spend-sub">0 transactions recorded</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Monthly Income</div>
+          <div class="metric-value income num" id="dash-income">₹0.00</div>
+          <div class="metric-sub" id="dash-income-sub">Net savings: ₹0.00</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Available Balance</div>
+          <div class="metric-value balance num" id="dash-balance">₹0.00</div>
+          <div class="metric-sub">All-time cumulative cash flow</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Monthly Budget Remaining</div>
+          <div class="metric-value num" id="dash-budget-rem">₹0.00</div>
+          <div class="metric-sub" id="dash-savings-rate">Savings rate: 0.0%</div>
+          <div class="metric-sub" id="dash-budget-sub" style="font-size: 0.75rem; color: var(--text-muted);">Capped by available cash</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Toolbar -->
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <button id="dash-btn-add-expense" class="btn btn-secondary" style="border-color: var(--danger-border); color: var(--danger); font-weight: 600;">- Record Expense</button>
+        <button id="dash-btn-add-income" class="btn btn-primary" style="background: var(--primary); font-weight: 600;">+ Record Income</button>
+        <button id="dash-btn-set-budget" class="btn btn-secondary">Configure Category Budgets</button>
+        <button id="dash-btn-export" class="btn btn-secondary">Export Statement (S3)</button>
+      </div>
+
+      <!-- Dual Column Layout -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem;">
+        <!-- Left: Category Budget Progress Quickview -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Category Budget Health</h3>
+            <span id="dash-budget-summary-badge" class="badge badge-neutral">0 categories</span>
+          </div>
+          <div id="dash-budget-list">
+            <div class="empty-state">
+              <div class="empty-state-title">No category budgets yet</div>
+              <p class="empty-state-desc">Set limits for categories like Groceries, Rent, and Dining to track spending against limits.</p>
+              <button class="btn btn-secondary btn-sm" onclick="App.switchTab('wallet')">Set Budgets</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Recent Transactions List -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Recent Activity</h3>
+            <button class="btn btn-secondary btn-sm" onclick="App.switchTab('transactions')">View All</button>
+          </div>
+          <div id="dash-recent-list">
+            <div class="empty-state">
+              <div class="empty-state-title">No transactions recorded</div>
+              <p class="empty-state-desc">Add your first expense or income to start tracking your finances.</p>
+              <button class="btn btn-primary btn-sm" onclick="TransactionsModule.openCreateModal()">Record Transaction</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: TRANSACTIONS -->
+    <section id="tab-transactions" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Transactions Ledger</h2>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="tx-btn-new-expense" class="btn btn-secondary btn-sm" style="border-color: var(--danger-border); color: var(--danger); font-weight: 600;">- Add Expense</button>
+            <button id="tx-btn-new-income" class="btn btn-primary btn-sm" style="background: var(--primary); font-weight: 600;">+ Add Income</button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Controls -->
+        <div class="filter-bar">
+          <div class="filter-item" style="flex: 2 1 200px;">
+            <input type="text" id="tx-search-input" placeholder="Search description or category...">
+          </div>
+          <div class="filter-item">
+            <select id="tx-filter-type">
+              <option value="">All Types</option>
+              <option value="expense">Expenses Only</option>
+              <option value="income">Income Only</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <select id="tx-filter-category">
+              <option value="">All Categories</option>
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div class="filter-item">
+            <select id="tx-filter-method">
+              <option value="">All Methods</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Digital Wallet">Digital Wallet</option>
+              <option value="Cash">Cash</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <button id="tx-btn-reset-filters" class="btn btn-secondary btn-sm">Reset</button>
+          </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="table-responsive">
+          <table class="data-table" id="tx-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Method</th>
+                <th>Receipt</th>
+                <th style="text-align: right;">Amount</th>
+                <th style="text-align: center;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tx-table-body">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty State Container -->
+        <div id="tx-empty-state" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">📋</div>
+          <div class="empty-state-title">No transactions found</div>
+          <p class="empty-state-desc">No transactions matched your search or filters. Clear your filters or add a new entry.</p>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="font-size: 0.8125rem; color: var(--text-secondary);" id="tx-pagination-info">
+            Showing 0 of 0
+          </div>
+          <div style="display: flex; gap: 0.25rem; align-items: center;" id="tx-pagination-controls">
+            <button id="tx-prev-page" class="btn btn-secondary btn-sm" disabled>&larr; Prev</button>
+            <span id="tx-current-page" style="font-size: 0.8125rem; padding: 0 0.5rem;">Page 1</span>
+            <button id="tx-next-page" class="btn btn-secondary btn-sm" disabled>Next &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ANALYTICS -->
+    <section id="tab-analytics" class="tab-panel">
+      <!-- Chart Row 1 -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Income vs Expense Trends (Last 6 Months)</h3>
+          </div>
+          <div style="position: relative; height: 280px;">
+            <canvas id="chart-trends"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Expense Category Breakdown</h3>
+          </div>
+          <div style="position: relative; height: 280px;">
+            <canvas id="chart-breakdown"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Row 2 -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Quarterly Performance</h3>
+          </div>
+          <div style="position: relative; height: 260px;">
+            <canvas id="chart-quarterly"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Top Spending Categories</h3>
+          </div>
+          <div id="analytics-top-categories" style="padding-top: 0.5rem;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: CALENDAR & HEATMAP -->
+    <section id="tab-calendar" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title" id="cal-month-title">October 2026</h2>
+            <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 2px;">
+              Click individual or multiple dates to aggregate spending and transactions.
+            </p>
+          </div>
+          <!-- Heatmap Legend -->
+          <div style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-muted);">
+            <span>Low spend</span>
+            <div style="width: 14px; height: 14px; background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 2px;"></div>
+            <div style="width: 14px; height: 14px; background: #EEF5F1; border: 1px solid var(--border-color); border-radius: 2px;"></div>
+            <div style="width: 14px; height: 14px; background: #D3E2D8; border: 1px solid var(--border-color); border-radius: 2px;"></div>
+            <span>High spend</span>
+          </div>
+        </div>
+
+        <!-- 7-Column Calendar Grid -->
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- Calendar cells rendered dynamically -->
+        </div>
+
+        <!-- Multi-Date Selection Summary Banner -->
+        <div id="cal-selection-banner" class="multi-select-banner" style="display: none;">
+          <div>
+            <strong id="cal-sel-count">0 dates selected</strong> &mdash;
+            Total Spent: <strong class="num" id="cal-sel-expense">₹0.00</strong> &bull;
+            Total Income: <strong class="num" id="cal-sel-income">₹0.00</strong> &bull;
+            Net: <strong class="num" id="cal-sel-net">₹0.00</strong>
+          </div>
+          <button id="cal-btn-clear-selection" class="btn btn-secondary btn-sm">Clear Selection</button>
+        </div>
+
+        <!-- Transactions for Selected Dates -->
+        <div id="cal-selected-tx-card" style="margin-top: 1.5rem; display: none;">
+          <h3 class="card-title" style="margin-bottom: 0.75rem;">Transactions for Selected Date(s)</h3>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Method</th>
+                  <th style="text-align: right;">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="cal-selected-tx-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: WALLET & BUDGETS -->
+    <section id="tab-wallet" class="tab-panel">
+      <!-- Income & Cashflow Overview -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Default Monthly Income & Ledger</h2>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1 1 240px;">
+            <label class="form-label" for="wallet-default-income">Expected Default Monthly Income (₹)</label>
+            <input type="number" id="wallet-default-income" step="0.01" min="0" placeholder="e.g. 75000.00">
+          </div>
+          <button id="wallet-btn-save-income" class="btn btn-primary">Update Default Income</button>
+        </div>
+      </div>
+
+      <!-- Category Budgets Management -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Category Budgets & Threshold Progress</h2>
+          <button id="wallet-btn-add-budget" class="btn btn-primary btn-sm">+ Add Category Budget</button>
+        </div>
+        <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Budgets alert you when spending reaches 80% (warning) and 100%+ (overspent) and automatically trigger AWS SNS notifications if configured.
+        </p>
+
+        <div id="wallet-budget-items">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- AWS SNS Email Notifications Subscription -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">AWS SNS Real-Time Budget Alerts</h3>
+        </div>
+        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Subscribe your email address to receive Amazon SNS notifications whenever a budget threshold is exceeded or when an overspending warning occurs.
+        </p>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: flex-end;">
+          <div style="flex: 1 1 280px;">
+            <label class="form-label" for="sns-subscribe-email">Notification Email Address</label>
+            <input type="email" id="sns-subscribe-email" placeholder="you@domain.com">
+          </div>
+          <button id="sns-btn-subscribe" class="btn btn-secondary">Subscribe via Amazon SNS</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: AWS & CLOUD STATUS -->
+    <section id="tab-cloud" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">AWS Architecture & Service Health</h2>
+          <div style="display: flex; gap: 0.5rem;">
+            <button id="cloud-btn-test-aws" class="btn btn-primary btn-sm">⚡ Test AWS Connections Now</button>
+            <button id="cloud-btn-refresh" class="btn btn-secondary btn-sm">Refresh Status</button>
+          </div>
+        </div>
+        <p style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+          CloudSpend is architected with dual local-fallback and production AWS services. Below is the live status of all 8 integrated AWS services.
+        </p>
+
+        <!-- Live AWS Test Diagnostics Banner -->
+        <div id="cloud-test-results-banner" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); background: var(--bg-subtle);">
+          <div id="cloud-test-results-content"></div>
+        </div>
+
+        <!-- 8 Services Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <!-- 1. Cognito -->
+          <div class="metric-card">
+            <div class="metric-label">1. AWS Cognito</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-cognito">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-cognito">User pool authentication</div>
+          </div>
+          <!-- 2. DynamoDB -->
+          <div class="metric-card">
+            <div class="metric-label">2. AWS DynamoDB</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-dynamodb">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-dynamodb">Single-table NoSQL storage</div>
+          </div>
+          <!-- 3. S3 -->
+          <div class="metric-card">
+            <div class="metric-label">3. AWS S3</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-s3">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-s3">Receipts & statement exports</div>
+          </div>
+          <!-- 4. SNS -->
+          <div class="metric-card">
+            <div class="metric-label">4. AWS SNS</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-sns">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-sns">Budget breach alert topics</div>
+          </div>
+          <!-- 5. CloudWatch -->
+          <div class="metric-card">
+            <div class="metric-label">5. AWS CloudWatch</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-cloudwatch">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-cloudwatch">Operational metrics & logs</div>
+          </div>
+          <!-- 6. SSM Parameter Store -->
+          <div class="metric-card">
+            <div class="metric-label">6. AWS SSM Parameter Store</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-ssm">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-ssm">Secure cloud config overlay</div>
+          </div>
+          <!-- 7. Lambda Worker -->
+          <div class="metric-card">
+            <div class="metric-label">7. AWS Lambda (Worker)</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-lambda">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-lambda">Async report processing</div>
+          </div>
+          <!-- 8. API Gateway -->
+          <div class="metric-card">
+            <div class="metric-label">8. AWS API Gateway</div>
+            <div style="font-size: 1.125rem; font-weight: 600;" id="cloud-status-apigw">Checking...</div>
+            <div class="metric-sub" id="cloud-sub-apigw">Serverless REST / HTTP routing</div>
+          </div>
+        </div>
+
+        <!-- Cloud Actions Bar -->
+        <h3 class="card-title" style="margin-bottom: 0.75rem;">Cloud Actions</h3>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button id="cloud-btn-trigger-async" class="btn btn-primary">Trigger Asynchronous Lambda Worker</button>
+          <button id="cloud-btn-export-csv" class="btn btn-secondary">Generate S3 CSV Statement</button>
+          <button id="cloud-btn-export-json" class="btn btn-secondary">Generate S3 JSON Export</button>
+        </div>
+        <div id="cloud-action-result" style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       MODALS
+       ========================================== -->
+
+  <!-- Modal 1: Auth (Sign In / Register) -->
+  <div id="auth-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="card-title" id="auth-modal-title">Sign In to CloudSpend</h3>
+        <button id="auth-modal-close" class="btn btn-secondary btn-sm" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Tab selector -->
+        <div style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem;">
+          <button id="auth-tab-login" class="nav-tab active" style="flex: 1; text-align: center;">Sign In</button>
+          <button id="auth-tab-register" class="nav-tab" style="flex: 1; text-align: center;">Create Account</button>
+        </div>
+
+        <form id="auth-form">
+          <div class="form-group" id="auth-name-group" style="display: none;">
+            <label class="form-label" for="auth-name">Full Name</label>
+            <input type="text" id="auth-name" placeholder="Alex Morgan">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="auth-email">Email Address</label>
+            <input type="email" id="auth-email" required placeholder="name@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="auth-password">Password</label>
+            <input type="password" id="auth-password" required placeholder="Minimum 8 characters">
+          </div>
+          <div class="form-group" id="auth-income-group" style="display: none;">
+            <label class="form-label" for="auth-income">Default Monthly Income (₹)</label>
+            <input type="number" id="auth-income" step="0.01" min="0" placeholder="e.g. 75000.00">
+          </div>
+
+          <button type="submit" id="auth-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+            Sign In
+          </button>
+        </form>
+
+        <div style="margin-top: 1.25rem; text-align: center; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+          <button id="auth-demo-btn" class="btn btn-secondary btn-sm" style="width: 100%;">
+            Load Seed Demo Account (demo@cloudspend.local)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Record / Edit Transaction -->
+  <div id="tx-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="card-title" id="tx-modal-title">Record Transaction</h3>
+        <button id="tx-modal-close" class="btn btn-secondary btn-sm" aria-label="Close">&times;</button>
+      </div>
+      <form id="tx-form">
+        <div class="modal-body">
+          <input type="hidden" id="tx-id">
+
+          <!-- Prominent Unmistakable Type Selector -->
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label class="form-label">Transaction Flow</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <button type="button" id="tx-pill-expense" class="btn btn-secondary active" style="flex: 1; border-color: var(--danger); background: var(--danger-light); color: var(--danger); font-weight: 700; padding: 0.65rem 0.5rem;">
+                - Expense (Money Out)
+              </button>
+              <button type="button" id="tx-pill-income" class="btn btn-secondary" style="flex: 1; font-weight: 700; padding: 0.65rem 0.5rem;">
+                + Income (Money In)
+              </button>
+            </div>
+            <input type="hidden" id="tx-type" value="expense">
+            <div id="tx-type-hint" style="font-size: 0.75rem; color: var(--danger); margin-top: 4px; font-weight: 500;">
+              🔴 Outflow: This will count towards your monthly spending.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" id="tx-amount-label" for="tx-amount">Expense Amount (₹)</label>
+            <input type="number" id="tx-amount" step="0.01" min="0.01" required placeholder="0.00">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="tx-desc">Description</label>
+            <input type="text" id="tx-desc" required placeholder="e.g. October Salary, Supermarket, Apartment Rent">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="tx-category">Category</label>
+              <input type="text" id="tx-category" required list="category-datalist" placeholder="e.g. Groceries">
+              <datalist id="category-datalist">
+                <!-- Dynamically populated based on active type -->
+              </datalist>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tx-date">Date</label>
+              <input type="date" id="tx-date" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="tx-payment-method">Payment Method</label>
+              <select id="tx-payment-method" required>
+                <option value="Credit Card">Credit Card</option>
+                <option value="Debit Card">Debit Card</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Digital Wallet">Digital Wallet / UPI</option>
+                <option value="Cash">Cash</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="tx-receipt-file">Receipt Document (Optional)</label>
+              <input type="file" id="tx-receipt-file" accept="image/*,application/pdf">
+              <input type="hidden" id="tx-receipt-url">
+              <input type="hidden" id="tx-receipt-filename">
+            </div>
+          </div>
+
+          <div id="tx-receipt-preview" style="display: none; font-size: 0.8125rem; color: var(--primary);">
+            Attached receipt: <span id="tx-receipt-preview-name"></span>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="tx-btn-cancel" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="tx-btn-save" class="btn btn-primary">Save Transaction</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Set Category Budget -->
+  <div id="budget-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="card-title">Set Category Budget</h3>
+        <button id="budget-modal-close" class="btn btn-secondary btn-sm" aria-label="Close">&times;</button>
+      </div>
+      <form id="budget-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="budget-category">Category</label>
+            <input type="text" id="budget-category" required list="category-datalist" placeholder="e.g. Groceries">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="budget-limit">Monthly Spending Limit (₹)</label>
+            <input type="number" id="budget-limit" step="100" min="0" required placeholder="15000">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="budget-btn-cancel" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="budget-btn-save" class="btn btn-primary">Save Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Vendors & Modules -->
+  <script src="/vendor/chart.umd.min.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/transactions.js"></script>
+  <script src="/js/analytics.js"></script>
+  <script src="/js/calendar.js"></script>
+  <script src="/js/wallet.js"></script>
+  <script src="/js/cloud.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
