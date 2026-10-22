@@ -108,11 +108,11 @@ flowchart TD
 ## Prerequisites
 
 Before starting, ensure you have the following installed on your machine:
-* **Node.js**: `v20.x`, `v22.x`, or `v24.x` (Tested and verified on Node `v24.18.1`).
-* **npm**: `v10.x` or `v11.x` (Tested on `11.16.0`).
-* **Operating System**: Windows 10/11 (PowerShell), macOS, or Linux.
-* **AWS Account** *(Required only for cloud mode)*: An active AWS account with permissions to create IAM, DynamoDB, S3, SNS, CloudWatch, and SSM resources.
-* **AWS SAM CLI** *(Optional, required only for Model B full serverless deployment)*: `sam --version`.
+- **Node.js**: `v20.x`, `v22.x`, or `v24.x` (Tested and verified on Node `v24.18.1`).
+- **npm**: `v10.x` or `v11.x` (Tested on `11.16.0`).
+- **Operating System**: Windows 10/11 (PowerShell), macOS, or Linux.
+- **AWS Account** *(Required only for cloud mode)*: An active AWS account with permissions to create IAM, DynamoDB, S3, SNS, CloudWatch, and SSM resources.
+- **AWS SAM CLI** *(Optional, required only for Model B full serverless deployment)*: `sam --version`.
 
 ---
 
@@ -120,30 +120,31 @@ Before starting, ensure you have the following installed on your machine:
 
 Run CloudSpend locally with **zero AWS credentials or cloud setup required**.
 
-### Step 1: Open Windows PowerShell & Navigate to Directory
-```powershell
-cd c:\kanika\projects\CloudSpend
+### Step 1: Open Terminal & Navigate to Directory
+```bash
+git clone https://github.com/<your-username>/CloudSpend.git
+cd CloudSpend
 ```
 
 ### Step 2: Install Dependencies
-```powershell
+```bash
 npm install
 ```
 
 ### Step 3: Configure Environment Variables
 Copy `.env.example` to `.env` (the defaults are pre-configured for local mode):
-```powershell
-Copy-Item .env.example .env
+```bash
+cp .env.example .env
 ```
 
 ### Step 4: Seed Sample Data *(Optional but Recommended)*
 To populate the database with a pre-configured demo account (`demo@cloudspend.local` / `Password123!`), 17 historical transactions in Indian Rupees (`₹`), and monthly category budgets:
-```powershell
+```bash
 npm run seed
 ```
 
 ### Step 5: Start the Application
-```powershell
+```bash
 npm start
 ```
 The server will start on port `3000`:
@@ -160,8 +161,8 @@ The server will start on port `3000`:
 Open your browser to:
 👉 **[http://localhost:3000](http://localhost:3000)**
 
-* Click **Sign In** &rarr; **Load Seed Demo Account** to explore immediately, OR
-* Click **Create Account** to experience the empty-state workflow with your own isolated user account.
+- Click **Sign In** &rarr; **Load Seed Demo Account** to explore immediately, OR
+- Click **Create Account** to experience the empty-state workflow with your own isolated user account.
 
 ---
 
@@ -169,9 +170,9 @@ Open your browser to:
 
 CloudSpend supports two cloud connection models:
 
-* **Deployment Model A: Hybrid Cloud (Local Node App + Live AWS Services)**
+- **Deployment Model A: Hybrid Cloud (Local Node App + Live AWS Services)**
   The Express web app runs locally on your PC (`http://localhost:3000`), but connects directly to **live AWS cloud services** (DynamoDB for data, S3 for receipts, SNS for emails, CloudWatch for metrics, and SSM for config). **No serverless deployment or SAM required!**
-* **Deployment Model B: Full Serverless Deployment (AWS SAM / API Gateway / Lambda)**
+- **Deployment Model B: Full Serverless Deployment (AWS SAM / API Gateway / Lambda)**
   The entire application is packaged into AWS Lambda functions behind an AWS API Gateway HTTP endpoint.
 
 ---
@@ -181,15 +182,15 @@ CloudSpend supports two cloud connection models:
 If you already have your AWS Access Keys, you can provision and connect 6+ AWS services with a single script:
 
 #### Step 1: Put your AWS credentials into `.env`:
-Open `c:\kanika\projects\CloudSpend\.env` and set:
+Open `.env` and set your credentials:
 ```env
 AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
 ```
 
 #### Step 2: Run the automated resource provisioner:
-```powershell
+```bash
 npm run aws:setup
 ```
 This automated script will:
@@ -202,7 +203,7 @@ This automated script will:
 7. Automatically write the new resource names and ARNs into your `.env` file.
 
 #### Step 3: Verify the Live AWS Connection:
-```powershell
+```bash
 npm run test:aws
 ```
 Or open the Web App &rarr; Navigate to **AWS & Cloud Status** &rarr; Click **"⚡ Test AWS Connections Now"**.
@@ -316,10 +317,11 @@ If you prefer to configure each service manually in the AWS Management Console:
    * **Sign-in options**: Select **Email**.
    * **Password policy**: Defaults (min length 8).
    * **User pool name**: `CloudSpend-UserPool`.
-   * **App client**: Select **Public client** &rarr; App client name: `CloudSpend-WebClient` &rarr; Generate a client secret: **Don't generate a client secret**.
+   * **App client type**: Select **Single-page application (SPA)** / **Public client** &rarr; App client name: `CloudSpend-WebClient` &rarr; Client secret: **Don't generate a client secret**.
 3. Click **Create user pool**.
-4. Copy the **User pool ID** (e.g. `us-east-1_abcdef123`) and **App client ID**.
-5. In your `.env` file, switch auth provider to Cognito:
+4. Open the created App Client (`CloudSpend-WebClient`), go to **Edit app client information** / **Authentication flows**, and ensure **`ALLOW_USER_PASSWORD_AUTH`** (Sign in with username and password) is enabled.
+5. Copy the **User pool ID** (e.g. `us-east-1_abcdef123`) and **App client ID**.
+6. In your `.env` file, switch auth provider to Cognito:
    ```env
    AUTH_PROVIDER=cognito
    COGNITO_USER_POOL_ID=us-east-1_abcdef123
@@ -327,7 +329,7 @@ If you prefer to configure each service manually in the AWS Management Console:
    ```
 
 #### 8. Service 7: AWS Lambda (Background Report Worker)
-1. The background worker is located at [`src/workers/asyncReportWorker.js`](file:///c:/kanika/projects/CloudSpend/src/workers/asyncReportWorker.js).
+1. The background worker is located at `src/workers/asyncReportWorker.js`.
 2. To deploy the worker standalone:
    * Open the [AWS Lambda Console](https://console.aws.amazon.com/lambda/) &rarr; **Create function**:
    * **Function name**: `CloudSpend-ReportWorker`
@@ -349,26 +351,25 @@ See [Deployment Model B](#deployment-model-b-full-serverless-deployment-aws-sam-
 If you want the entire app to run serverless in the cloud (no local Node process):
 
 #### Step 1: Ensure AWS SAM CLI is installed
-```powershell
+```bash
 sam --version
 ```
-*(If not installed, download the [AWS SAM installer for Windows](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html)).*
 
 #### Step 2: Build the SAM artifact
-```powershell
+```bash
 sam build
 ```
 
 #### Step 3: Deploy to AWS
-```powershell
+```bash
 sam deploy --guided
 ```
 SAM will ask you:
-* **Stack Name**: `cloudspend-prod`
-* **AWS Region**: `us-east-1`
-* **Confirm changes before deploy**: `y`
-* **Allow SAM CLI IAM role creation**: `y`
-* **Save arguments to configuration file**: `y`
+- **Stack Name**: `cloudspend-prod`
+- **AWS Region**: `us-east-1`
+- **Confirm changes before deploy**: `y`
+- **Allow SAM CLI IAM role creation**: `y`
+- **Save arguments to configuration file**: `y`
 
 #### Step 4: Access Your Live Cloud App
 SAM outputs your live HTTPS endpoint:
@@ -495,7 +496,7 @@ When creating your IAM User or Role for CloudSpend, attach the following least-p
 You can verify that your cloud setup is functioning at any time:
 
 #### 1. CLI Diagnostic Command
-```powershell
+```bash
 npm run test:aws
 ```
 Sample diagnostic output:
@@ -511,32 +512,32 @@ Sample diagnostic output:
        IAM ARN    : arn:aws:iam::123456789012:user/cloudspend-dev
 
   1. AWS Cognito (User Pools):
-    Status  : [CONNECTED] (180ms)
-    Details : Connected to Cognito User Pool "CloudSpend-UserPool"
+     Status  : [CONNECTED] (180ms)
+     Details : Connected to Cognito User Pool "CloudSpend-UserPool"
 
   2. AWS DynamoDB (Single-Table):
-    Status  : [CONNECTED] (95ms)
-    Details : Connected to DynamoDB table "CloudSpend-Main" (Status: ACTIVE)
+     Status  : [CONNECTED] (95ms)
+     Details : Connected to DynamoDB table "CloudSpend-Main" (Status: ACTIVE)
 
   3. AWS S3 (Receipts & Exports):
-    Status  : [CONNECTED] (110ms)
-    Details : Connected to S3 bucket "cloudspend-assets-123456789012-us-east-1"
+     Status  : [CONNECTED] (110ms)
+     Details : Connected to S3 bucket "cloudspend-assets-123456789012-us-east-1"
 
   4. AWS SNS (Budget Alerts):
-    Status  : [CONNECTED] (88ms)
-    Details : Connected to SNS topic "CloudSpend-BudgetAlerts"
+     Status  : [CONNECTED] (88ms)
+     Details : Connected to SNS topic "CloudSpend-BudgetAlerts"
 
   5. AWS CloudWatch (Metrics & Alarms):
-    Status  : [CONNECTED] (92ms)
-    Details : Connected to CloudWatch Metrics (Namespace: CloudSpend/App)
+     Status  : [CONNECTED] (92ms)
+     Details : Connected to CloudWatch Metrics (Namespace: CloudSpend/App)
 
   6. AWS SSM (Parameter Store):
-    Status  : [CONNECTED] (75ms)
-    Details : Connected to SSM Parameter Store (2 parameters at /cloudspend/config/)
+     Status  : [CONNECTED] (75ms)
+     Details : Connected to SSM Parameter Store (2 parameters at /cloudspend/config/)
 
   7. AWS Lambda (Async Report Worker):
-    Status  : [CONNECTED] (82ms)
-    Details : Connected to Lambda worker "CloudSpend-ReportWorker"
+     Status  : [CONNECTED] (82ms)
+     Details : Connected to Lambda worker "CloudSpend-ReportWorker"
 
 ================================================================
   Summary: 7 of 7 AWS services connected.
@@ -558,7 +559,7 @@ Sample diagnostic output:
 CloudSpend includes 22 automated unit and integration tests covering password hashing, JWT security, per-user data isolation, financial calculations in Indian Rupees, budget constraint math, transaction CRUD, pagination, filtering, multi-date querying, and critical API routes.
 
 Run the test suite using Node's native test runner:
-```powershell
+```bash
 npm test
 ```
 
@@ -606,43 +607,43 @@ npm test
 ## Core Features & Walkthrough
 
 ### 1. Dashboard
-* **Monthly Spending & Income**: Live calculation of total outflows and inflows for the selected month in Indian Rupees (`₹`).
-* **Available Balance**: Cumulative all-time ledger cashflow.
-* **Savings Rate & Budget Remaining**: Real-time percentage of income retained and cash-backed remaining budget.
-* **Cash-Constrained Budgeting**: Remaining budget never exceeds actual available cash on hand.
-* **Dual Action Buttons**: Separate `- Record Expense` and `+ Record Income` buttons with smart keyword detection.
-* **Recent Activity**: Quick review of newest transactions with immediate links to details.
+- **Monthly Spending & Income**: Live calculation of total outflows and inflows for the selected month in Indian Rupees (`₹`).
+- **Available Balance**: Cumulative all-time ledger cashflow.
+- **Savings Rate & Budget Remaining**: Real-time percentage of income retained and cash-backed remaining budget.
+- **Cash-Constrained Budgeting**: Remaining budget never exceeds actual available cash on hand.
+- **Dual Action Buttons**: Separate `- Record Expense` and `+ Record Income` buttons with smart keyword detection.
+- **Recent Activity**: Quick review of newest transactions with immediate links to details.
 
 ### 2. Transactions Ledger
-* **Full CRUD**: Create, read, update, and delete transactions with full validation.
-* **Search & Filter**: Real-time description search, type filter (expense/income), category filter, payment method filter (Credit Card, Debit Card, Bank Transfer, Digital Wallet, Cash).
-* **Receipt Attachment**: Attach receipt images/PDFs. In AWS mode, the client uploads directly to S3 via presigned URLs; in local mode, saves securely to `public/uploads/`.
-* **Pagination & Sorting**: Paginated data display with customizable limits.
+- **Full CRUD**: Create, read, update, and delete transactions with full validation.
+- **Search & Filter**: Real-time description search, type filter (expense/income), category filter, payment method filter (Credit Card, Debit Card, Bank Transfer, Digital Wallet, Cash).
+- **Receipt Attachment**: Attach receipt images/PDFs. In AWS mode, the client uploads directly to S3 via presigned URLs; in local mode, saves securely to `public/uploads/`.
+- **Pagination & Sorting**: Paginated data display with customizable limits.
 
 ### 3. Financial Analytics (Chart.js)
-* **Spending Trends**: 6-month comparative bar chart comparing monthly income against monthly expenses in ₹.
-* **Category Breakdown**: Doughnut chart visualizing exact percentage and rupee distribution per category.
-* **Quarterly Performance**: Financial ledger performance broken down across Q1, Q2, Q3, and Q4.
-* **Top Spending Categories**: Ranked progress bars highlighting top cash outlays.
+- **Spending Trends**: 6-month comparative bar chart comparing monthly income against monthly expenses in ₹.
+- **Category Breakdown**: Doughnut chart visualizing exact percentage and rupee distribution per category.
+- **Quarterly Performance**: Financial ledger performance broken down across Q1, Q2, Q3, and Q4.
+- **Top Spending Categories**: Ranked progress bars highlighting top cash outlays.
 
 ### 4. Interactive Monthly Calendar & Heatmap
-* **Heatmap Density**: Day cells dynamically shaded (`heat-0` to `heat-4`) based on daily expenditure relative to peak spending.
-* **Multi-Date Selection**: Click individual or multiple days to view combined spending, combined income, and net cashflow across the selected dates in Rupee (`₹`).
-* **Detailed Date Table**: Selected dates render an aggregated ledger view of all underlying transactions.
+- **Heatmap Density**: Day cells dynamically shaded (`heat-0` to `heat-4`) based on daily expenditure relative to peak spending.
+- **Multi-Date Selection**: Click individual or multiple days to view combined spending, combined income, and net cashflow across the selected dates in Rupee (`₹`).
+- **Detailed Date Table**: Selected dates render an aggregated ledger view of all underlying transactions.
 
 ### 5. Wallet & Category Budgets
-* **Default Monthly Income**: Set baseline expected income for monthly ledger balance forecasting.
-* **Threshold Progress**: Category limits monitor spending progress:
+- **Default Monthly Income**: Set baseline expected income for monthly ledger balance forecasting.
+- **Threshold Progress**: Category limits monitor spending progress:
   * **Normal**: `< 80%` (Forest Green)
   * **Warning**: `>= 80%` and `< 100%` (Amber / Ochre)
   * **Overspent**: `>= 100%` (Muted Terracotta / Red)
-* **Amazon SNS Subscription**: Input your email address to receive immediate push alerts whenever a budget threshold is exceeded.
+- **Amazon SNS Subscription**: Input your email address to receive immediate push alerts whenever a budget threshold is exceeded.
 
 ### 6. Cloud & AWS Status Monitor
-* Real-time dashboard view inspecting live status, configuration, and connectivity across all 8 integrated AWS services.
-* **⚡ Test AWS Connections Now**: Real-time SDK ping to all 8 AWS services reporting latency and credentials.
-* **Trigger Async Lambda Worker**: Dispatches background job generating statements without blocking HTTP clients.
-* **Export Statement**: Generates CSV or JSON statement exports and uploads them to Amazon S3 with 24-hour signed download links.
+- Real-time dashboard view inspecting live status, configuration, and connectivity across all 8 integrated AWS services.
+- **⚡ Test AWS Connections Now**: Real-time SDK ping to all 8 AWS services reporting latency and credentials.
+- **Trigger Async Lambda Worker**: Dispatches background job generating statements without blocking HTTP clients.
+- **Export Statement**: Generates CSV or JSON statement exports and uploads them to Amazon S3 with 24-hour signed download links.
 
 ---
 
@@ -652,20 +653,20 @@ To cleanly delete all provisioned AWS resources and eliminate recurring charges:
 
 ### Step 1: Empty the S3 Bucket
 *(S3 prevents deletion of non-empty buckets)*
-```powershell
-$BUCKET_NAME = aws cloudformation describe-stacks --stack-name cloudspend-prod --query "Stacks[0].Outputs[?OutputKey=='S3BucketName'].OutputValue" --output text
-aws s3 rm s3://$BUCKET_NAME --recursive
+```bash
+AWS_BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name cloudspend-prod --query "Stacks[0].Outputs[?OutputKey=='S3BucketName'].OutputValue" --output text)
+aws s3 rm s3://$AWS_BUCKET_NAME --recursive
 ```
 
 ### Step 2: Delete CloudFormation Stack (if using Model B)
-```powershell
+```bash
 sam delete --stack-name cloudspend-prod --no-prompts
 ```
 
 ### Step 3: Remove DynamoDB Table & SNS Topic (if using Model A)
-```powershell
+```bash
 aws dynamodb delete-table --table-name CloudSpend-Main
-aws s3 rb s3://$BUCKET_NAME --force
+aws s3 rb s3://$AWS_BUCKET_NAME --force
 aws ssm delete-parameters --names "/cloudspend/config/jwt_secret" "/cloudspend/config/app_name"
 ```
 
@@ -674,19 +675,20 @@ aws ssm delete-parameters --names "/cloudspend/config/jwt_secret" "/cloudspend/c
 ## Troubleshooting & FAQ
 
 #### 1. "CredentialsProviderError: Could not load credentials from any providers"
-* **Solution**: Your AWS credentials are not yet configured. Provide `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in `.env`, or run `aws configure` in PowerShell.
+- **Solution**: Your AWS credentials are not yet configured. Provide `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` in `.env`, or run `aws configure` in your terminal.
 
 #### 2. S3 Presigned URL Upload Fails with CORS Error
-* **Solution**: In AWS Cloud mode, verify that the S3 bucket's CORS configuration allows `PUT` and headers `['*']`. Running `npm run aws:setup` configures this automatically.
+- **Solution**: In AWS Cloud mode, verify that the S3 bucket's CORS configuration allows `PUT` and headers `['*']`. Running `npm run aws:setup` configures this automatically.
 
 #### 3. Email Alerts Not Arriving from Amazon SNS
-* **Solution**: Amazon SNS sends a confirmation link to the subscribed email address (`"AWS Notification - Subscription Confirmation"`). You must click the confirmation link in your inbox before SNS will dispatch alerts to that address.
+- **Solution**: Amazon SNS sends a confirmation link to the subscribed email address (`"AWS Notification - Subscription Confirmation"`). You must click the confirmation link in your inbox before SNS will dispatch alerts to that address.
 
-#### 4. `better-sqlite3` Native Addon Error on Windows
-* **Solution**: CloudSpend uses `better-sqlite3` prebuilt binaries. Ensure you are running an LTS Node version (`20.x`, `22.x`, `24.x`).
+#### 4. Cognito "User is not confirmed" or "USER_PASSWORD_AUTH flow not enabled" Error
+- **Solution**:
+  - In the AWS Cognito Console under your User Pool, go to **App clients** &rarr; select your SPA client &rarr; enable **`ALLOW_USER_PASSWORD_AUTH`**.
+  - Under **Users**, click on the newly registered email address and select **Confirm account**.
+
+#### 5. `better-sqlite3` Native Addon Error
+- **Solution**: CloudSpend uses `better-sqlite3` prebuilt binaries. Ensure you are running an LTS Node version (`20.x`, `22.x`, `24.x`).
 
 ---
-
-## License
-
-MIT License. Designed and built for production-minded personal finance tracking and cloud architecture demonstration.
